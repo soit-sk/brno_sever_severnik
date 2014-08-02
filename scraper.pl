@@ -7,8 +7,10 @@ use warnings;
 
 # Modules.
 use Database::DumpTruck;
+use Digest::MD5;
 use Encode qw(decode_utf8 encode_utf8);
 use English;
+use File::Temp qw(tempfile);
 use HTML::TreeBuilder;
 use LWP::UserAgent;
 use URI;
@@ -129,6 +131,23 @@ sub get_root {
 	return $tree->elementify;
 }
 
+# Get link and compute MD5 sum.
+sub md5 {
+	my $link = shift;
+	my (undef, $temp_file) = tempfile();
+	my $get = $ua->get($link, ':content_file' => $temp_file);
+	my $md5_sum;
+	if ($get->is_success) {
+		my $md5 = Digest::MD5->new;
+		open my $temp_fh, '<', $temp_file;
+		$md5->addfile($temp_fh);
+		$md5_sum = $md5->hexdigest;
+		close $temp_fh;
+		unlink $temp_file;
+	}
+	return $md5_sum;
+}
+
 # Process year block.
 sub process_year_block {
 	my ($year, $year_div) = @_;
@@ -155,13 +174,17 @@ sub process_year_block {
 					print '- '.encode_utf8($month)."\n";
 					$month_printed = 1;
 				}
+				my $pdf_link = $base_uri->scheme.'://'.
+					$base_uri->host.$a->attr('href');
+				my $md5 = md5($pdf_link);
 				$dt->insert({
 					'Year' => $year,
-					'PDF_link' => $base_uri->scheme.'://'.
-						$base_uri->host.
-						$a->attr('href'),
+					'PDF_link' => $pdf_link,
 					'Month' => $month_part,
+					'MD5' => $md5,
 				});
+				# TODO Move to begin with create_table().
+				$dt->create_index(['MD5'], 'data', 1, 1);
 			}
 		}
 	}
