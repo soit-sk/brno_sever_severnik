@@ -139,7 +139,7 @@ sub process_year_block {
 		if ($month =~ m/^\s*$/ms) {
 			next;
 		}
-		print '- '.encode_utf8($month)."\n";
+		my $month_printed = 0;
 		foreach my $month_part (decode_month($month)) {
 			my $ret_ar = eval {
 				$dt->execute('SELECT COUNT(*) FROM data '.
@@ -151,6 +151,10 @@ sub process_year_block {
 				|| ! defined $ret_ar->[0]->{'count(*)'}
 				|| $ret_ar->[0]->{'count(*)'} == 0) {
 
+				if (! $month_printed) {
+					print '- '.encode_utf8($month)."\n";
+					$month_printed = 1;
+				}
 				$dt->insert({
 					'Year' => $year,
 					'PDF_link' => $base_uri->scheme.'://'.
