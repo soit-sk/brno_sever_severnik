@@ -184,7 +184,7 @@ sub process_year_block {
 					'MD5' => $md5,
 				});
 				# TODO Move to begin with create_table().
-				$dt->create_index(['MD5'], 'data', 1, 1);
+				$dt->create_index(['MD5'], 'data', 1, 0);
 			}
 		}
 	}
