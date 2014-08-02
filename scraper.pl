@@ -90,7 +90,7 @@ sub get_h3_content {
 			last;
 		}
 	}
-	my @content = $ret_a->parent->parent->parent->content_list;
+	my @content = $ret_a->parent->parent->content_list;
 	my $num = 0;
 	foreach my $content (@content) {
 		if ($num == 1) {
