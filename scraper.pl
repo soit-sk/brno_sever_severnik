@@ -141,13 +141,24 @@ sub process_year_block {
 		}
 		print '- '.encode_utf8($month)."\n";
 		foreach my $month_part (decode_month($month)) {
-			# TODO Update.
-			$dt->insert({
-				'Year' => $year,
-				'PDF_link' => $base_uri->scheme.'://'.$base_uri->host.
-					$a->attr('href'),
-				'Month' => $month_part,
-			});
+			my $ret_ar = eval {
+				$dt->execute('SELECT COUNT(*) FROM data '.
+					'WHERE Year = ? AND Month = ?',
+					$year, $month_part);
+			};
+			if ($EVAL_ERROR || ! @{$ret_ar}
+				|| ! exists $ret_ar->[0]->{'count(*)'}
+				|| ! defined $ret_ar->[0]->{'count(*)'}
+				|| $ret_ar->[0]->{'count(*)'} == 0) {
+
+				$dt->insert({
+					'Year' => $year,
+					'PDF_link' => $base_uri->scheme.'://'.
+						$base_uri->host.
+						$a->attr('href'),
+					'Month' => $month_part,
+				});
+			}
 		}
 	}
 }
